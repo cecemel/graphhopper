@@ -53,6 +53,7 @@ public class GraphHopper implements GraphHopperAPI
     public static void main( String[] strs ) throws Exception
     {
         CmdArgs args = CmdArgs.read(strs);
+        System.out.print("hello world");
         GraphHopper hopper = new GraphHopper().init(args);
         hopper.importOrLoad();
         if (args.getBool("graph.testIT", false))
@@ -728,6 +729,7 @@ public class GraphHopper implements GraphHopperAPI
         weighting = weighting.toLowerCase();
         if ("fastest".equals(weighting))
         {
+             logger.info("hello FEEEEEEEEEEEEEEEElix");
             if (encoder instanceof BikeCommonFlagEncoder)
                 return new PriorityWeighting((BikeCommonFlagEncoder) encoder);
             else
