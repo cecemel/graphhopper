@@ -73,6 +73,8 @@ public class GraphHopper implements GraphHopperAPI
     private boolean sortGraph = false;
     boolean removeZipped = true;
     private boolean elevation = false;
+    private LockFactory lockFactory = new NativeFSLockFactory();
+    private final String fileLockName = "write.lock";
     // for routing
     private boolean simplifyRequest = true;
     // for index
@@ -85,7 +87,7 @@ public class GraphHopper implements GraphHopperAPI
     private AlgorithmPreparation prepare;
     private boolean doPrepare = true;
     private boolean chEnabled = true;
-    private String chWeighting = "fastest";
+    private String chWeighting = "racerboi";
     private int periodicUpdates = -1;
     private int lazyUpdates = -1;
     private int neighborUpdates = -1;
@@ -496,6 +498,27 @@ public class GraphHopper implements GraphHopperAPI
         sortGraph = args.getBool("graph.doSort", sortGraph);
         removeZipped = args.getBool("graph.removeZipped", removeZipped);
         turnCosts = args.getBool("graph.turnCosts", turnCosts);
+        if (args.get("graph.locktype", "native").equals("simple"))
+            lockFactory = new SimpleFSLockFactory();
+        else
+            lockFactory = new NativeFSLockFactory();
+
+        // elevation
+        String eleProviderStr = args.get("graph.elevation.provider", "noop").toLowerCase();
+        String cacheDirStr = args.get("graph.elevation.cachedir", "");
+        String baseURL = args.get("graph.elevation.baseurl", "");
+        DAType elevationDAType = DAType.fromString(args.get("graph.elevation.dataaccess", "MMAP"));
+        ElevationProvider tmpProvider = ElevationProvider.NOOP;
+        if (eleProviderStr.equalsIgnoreCase("srtm"))
+            tmpProvider = new SRTMProvider();
+        // later:
+//        else if(eleProviderStr.startsWith("cgiar:"))        
+//            eleProvider = new CGIARProvider().setCacheDir(new File());        
+
+        tmpProvider.setCacheDir(new File(cacheDirStr));
+        tmpProvider.setBaseURL(baseURL);
+        tmpProvider.setInMemory(elevationDAType.isInMemory());
+        setElevationProvider(tmpProvider);
 
         // optimizable prepare
         minNetworkSize = args.getInt("prepare.minNetworkSize", minNetworkSize);
@@ -519,23 +542,6 @@ public class GraphHopper implements GraphHopperAPI
         encodingManager = new EncodingManager(flagEncoders, bytesForFlags);
         workerThreads = args.getInt("osmreader.workerThreads", workerThreads);
         enableInstructions = args.getBool("osmreader.instructions", enableInstructions);
-
-        // elevation
-        String eleProviderStr = args.get("graph.elevation.provider", "noop").toLowerCase();
-        String cacheDirStr = args.get("graph.elevation.cachedir", "");
-        String baseURL = args.get("graph.elevation.baseurl", "");
-        DAType elevationDAType = DAType.fromString(args.get("graph.elevation.dataaccess", "MMAP"));
-        ElevationProvider tmpProvider = ElevationProvider.NOOP;
-        if (eleProviderStr.equalsIgnoreCase("srtm"))
-            tmpProvider = new SRTMProvider();
-        // later:
-//        else if(eleProviderStr.startsWith("cgiar:"))        
-//            eleProvider = new CGIARProvider().setCacheDir(new File());        
-
-        tmpProvider.setCacheDir(new File(cacheDirStr));
-        tmpProvider.setBaseURL(baseURL);
-        tmpProvider.setInMemory(elevationDAType.isInMemory());
-        setElevationProvider(tmpProvider);
 
         // index
         preciseIndexResolution = args.getInt("index.highResolution", preciseIndexResolution);
@@ -572,18 +578,34 @@ public class GraphHopper implements GraphHopperAPI
     private GraphHopper process( String graphHopperLocation )
     {
         setGraphHopperLocation(graphHopperLocation);
+        Lock lock = null;
         try
         {
-            importData();
-            graph.getProperties().put("osmreader.import.date", formatDateTime(new Date()));
-        } catch (IOException ex)
+            if (graph.getDirectory().getDefaultType().isStoring())
+            {
+                lockFactory.setLockDir(new File(graphHopperLocation));
+                lock = lockFactory.create(fileLockName);
+                if (!lock.obtain())
+                    throw new RuntimeException("To avoid multiple writers we need to obtain a lock but it failed. In " + graphHopperLocation);
+            }
+
+            try
+            {
+                importData();
+                graph.getProperties().put("osmreader.import.date", formatDateTime(new Date()));
+            } catch (IOException ex)
+            {
+                throw new RuntimeException("Cannot parse OSM file " + getOSMFile(), ex);
+            }
+            cleanUp();
+            optimize();
+            postProcessing();
+            flush();
+        } finally
         {
-            throw new RuntimeException("Cannot parse OSM file " + getOSMFile(), ex);
+            if (lock != null)
+                lock.release();
         }
-        cleanUp();
-        optimize();
-        postProcessing();
-        flush();
         return this;
     }
 
@@ -677,12 +699,29 @@ public class GraphHopper implements GraphHopperAPI
             graph = new GraphHopperStorage(dir, encodingManager, hasElevation());
 
         graph.setSegmentSize(defaultSegmentSize);
-        if (!graph.loadExisting())
-            return false;
 
-        postProcessing();
-        fullyLoaded = true;
-        return true;
+        Lock lock = null;
+        try
+        {
+            if (graph.getDirectory().getDefaultType().isStoring())
+            {
+                lockFactory.setLockDir(new File(ghLocation));
+                lock = lockFactory.create(fileLockName);
+                if (!lock.obtain())
+                    throw new RuntimeException("To avoid reading partial data we need to obtain the lock but it failed. In " + ghLocation + ", ");
+            }
+
+            if (!graph.loadExisting())
+                return false;
+
+            postProcessing();
+            fullyLoaded = true;
+            return true;
+        } finally
+        {
+            if (lock != null)
+                lock.release();
+        }
     }
 
     /**
@@ -725,6 +764,7 @@ public class GraphHopper implements GraphHopperAPI
      */
     public Weighting createWeighting( String weighting, FlagEncoder encoder )
     {
+        return new RacerboiWeighter();
         // ignore case
         weighting = weighting.toLowerCase();
         if ("fastest".equals(weighting))
@@ -734,7 +774,8 @@ public class GraphHopper implements GraphHopperAPI
                 return new PriorityWeighting((BikeCommonFlagEncoder) encoder);
             else
                 return new FastestWeighting(encoder);
-        }
+        } else if("racerboi".equals(weighting))
+            return new RacerboiWeighter();
         return new ShortestWeighting();
     }
 

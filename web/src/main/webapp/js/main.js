@@ -24,7 +24,6 @@ var nominatim_reverse = "http://nominatim.openstreetmap.org/reverse";
 var routingLayer;
 var map;
 var browserTitle = "GraphHopper Maps - Driving Directions";
-var firstClickToRoute;
 var defaultTranslationMap = null;
 var enTranslationMap = null;
 var routeSegmentPopup = null;
@@ -48,7 +47,7 @@ $(document).ready(function(e) {
     // fixing cross domain support e.g in Opera
     jQuery.support.cors = true;
 
-    if (host.indexOf("graphhopper.com") > 0)
+    if (isProduction())
         $('#hosting').show();
 
     var History = window.History;
@@ -88,7 +87,7 @@ $(document).ready(function(e) {
                 ghRequest.setLocale(translations["locale"]);
                 defaultTranslationMap = translations["default"];
                 enTranslationMap = translations["en"];
-                if (defaultTranslationMap == null)
+                if (!defaultTranslationMap)
                     defaultTranslationMap = enTranslationMap;
 
                 initI18N();
@@ -102,7 +101,7 @@ $(document).ready(function(e) {
                 bounds.maxLon = tmp[2];
                 bounds.maxLat = tmp[3];
                 var vehiclesDiv = $("#vehicles");
-                function createButton(vehicle) {                    
+                function createButton(vehicle) {
                     var button = $("<button class='vehicle-btn' title='" + tr(vehicle) + "'/>");
                     button.attr('id', vehicle);
                     button.html("<img src='img/" + vehicle + ".png' alt='" + tr(vehicle) + "'></img>");
@@ -117,6 +116,9 @@ $(document).ready(function(e) {
 
                 if (json.features) {
                     ghRequest.features = json.features;
+                    if (isProduction())
+                        delete json.features['bike']
+
                     var vehicles = Object.keys(json.features);
                     if (vehicles.length > 0)
                         ghRequest.initVehicle(vehicles[0]);
@@ -132,7 +134,8 @@ $(document).ready(function(e) {
                 initFromParams(urlParams, true);
             }, function(err) {
                 console.log(err);
-                $('#error').html('GraphHopper API offline? ' + host);
+                $('#error').html('GraphHopper API offline? <a href="http://graphhopper.com/maps">Refresh</a>'
+                        + '<br/>Status: ' + err.statusText + '<br/>' + host);
 
                 bounds = {
                     "minLon": -180,
@@ -254,7 +257,29 @@ function initMap() {
 
     // default
     map = L.map('map', {
-        layers: [mapquest]
+        layers: [lyrk],
+        contextmenu: true,
+        contextmenuWidth: 140,
+        contextmenuItems: [{
+                text: 'Set as start',
+                callback: setStartCoord
+            }, {
+                text: 'Set as end',
+                callback: setEndCoord
+            }, {
+                separator: true,
+                index: 1
+            }, {
+                text: 'Show coordinates',
+                callback: function(e) {
+                    alert(e.latlng.lat + "," + e.latlng.lng);
+                }
+            }, {
+                text: 'Center map here',
+                callback: function(e) {
+                    map.panTo(e.latlng);
+                }
+            }]
     });
 
     var baseMaps = {
@@ -268,20 +293,15 @@ function initMap() {
         "OpenStreetMap": osm,
         "OpenStreetMap.de": osmde
     };
-
-    //    var overlays = {
-    //        "MapQuest Hybrid": mapquest
-    //    };
-
-    // no layers for small browser windows
-    if ($(window).width() > 400) {
-        L.control.layers(baseMaps/*, overlays*/).addTo(map);
-    }
+    
+    L.control.layers(baseMaps/*, overlays*/).addTo(map);
 
     L.control.scale().addTo(map);
 
     map.fitBounds(new L.LatLngBounds(new L.LatLng(bounds.minLat, bounds.minLon),
             new L.LatLng(bounds.maxLat, bounds.maxLon)));
+    if(isProduction())
+        map.setView(new L.LatLng(0, 0), 2);
 
     map.attributionControl.setPrefix('');
 
@@ -310,28 +330,26 @@ function initMap() {
 
     routingLayer = L.geoJson().addTo(map);
     routingLayer.options = {style: {color: "#00cc33", "weight": 5, "opacity": 0.6}};
+}
 
-    firstClickToRoute = true;
-    function onMapClick(e) {
-        var latlng = e.latlng;
-        latlng.lng = makeValidLng(latlng.lng);
-        if (firstClickToRoute) {
-            // set start point
-            routingLayer.clearLayers();
-            firstClickToRoute = false;
-            ghRequest.from.setCoord(latlng.lat, latlng.lng);
-            resolveFrom();
-        } else {
-            // set end point
-            ghRequest.to.setCoord(latlng.lat, latlng.lng);
-            resolveTo();
-            // do not wait for resolving
-            routeLatLng(ghRequest);
-            firstClickToRoute = true;
-        }
+function setStartCoord(e) {
+    ghRequest.from.setCoord(e.latlng.lat, e.latlng.lng);
+    resolveFrom();
+    routeIfAllResolved();
+}
+
+function setEndCoord(e) {
+    ghRequest.to.setCoord(e.latlng.lat, e.latlng.lng);
+    resolveTo();
+    routeIfAllResolved();
+}
+
+function routeIfAllResolved() {
+    if (ghRequest.from.isResolved() && ghRequest.to.isResolved()) {
+        routeLatLng(ghRequest);
+        return true;
     }
-
-    map.on('click', onMapClick);
+    return false;
 }
 
 function makeValidLng(lon) {
@@ -386,10 +404,11 @@ function resolve(fromOrTo, locCoord) {
         var errorDiv = $("#" + fromOrTo + "ResolveError");
         errorDiv.empty();
 
-        if (locCoord.error)
-            errorDiv.text(locCoord.error);
-        else
-            errorDiv.text("");
+        if (locCoord.error) {
+            errorDiv.show();
+            errorDiv.text(locCoord.error).fadeOut(5000);
+            locCoord.error = '';
+        }
 
         $("#" + fromOrTo + "Indicator").hide();
         $("#" + fromOrTo + "Flag").show();
@@ -714,7 +733,7 @@ function routeLatLng(request, doQuery) {
             $("#info").append(instructionsElement);
 
             if (partialInstr) {
-                var moreDiv = $("<button id='moreButton'>"+tr("moreButton")+"..</button>");
+                var moreDiv = $("<button id='moreButton'>" + tr("moreButton") + "..</button>");
                 moreDiv.click(function() {
                     moreDiv.remove();
                     for (var m = len; m < path.instructions.length; m++) {
@@ -757,13 +776,12 @@ function routeLatLng(request, doQuery) {
             if (request.vehicle.toUpperCase() === "FOOT") {
                 addToGoogle = "&dirflg=w";
                 addToBing = "&mode=W";
-            } else if ((request.vehicle.toUpperCase() === "BIKE") ||
-                    (request.vehicle.toUpperCase() === "RACINGBIKE") ||
+            } else if ((request.vehicle.toUpperCase().indexOf("BIKE") >= 0) ||
                     (request.vehicle.toUpperCase() === "MTB")) {
                 addToGoogle = "&dirflg=b";
                 // ? addToBing = "&mode=B";
             }
-            googleLink.attr("href", "http://maps.google.com/?q=from:" + from + "+to:" + to + addToGoogle);
+            googleLink.attr("href", "http://maps.google.com/?q=saddr=" + from + "&daddr=" + to + addToGoogle);
             hiddenDiv.append(googleLink);
             var bingLink = $("<a>Bing</a> ");
             bingLink.attr("href", "http://www.bing.com/maps/default.aspx?rtp=adr." + from + "~adr." + to + addToBing);
@@ -826,8 +844,8 @@ function addInstruction(main, instr, instrIndex, lngLat) {
     else
         throw "did not found sign " + sign;
     var title = instr.text;
-    if(instr.annotationText) {
-        if(!title)
+    if (instr.annotationText) {
+        if (!title)
             title = instr.annotationText;
         else
             title = title + ", " + instr.annotationText;
@@ -902,13 +920,13 @@ function parseUrl(query) {
         value = decodeURIComponent(value.replace(/\+/g, ' '));
 
         if (typeof res[key] === "undefined") {
-            if(value === 'true')
+            if (value === 'true')
                 res[key] = true;
-            else if(value === 'false')
+            else if (value === 'false')
                 res[key] = false;
             else {
                 var tmp = Number(value);
-                if(isNaN(tmp))
+                if (isNaN(tmp))
                     res[key] = value;
                 else
                     res[key] = Number(value);
@@ -963,19 +981,19 @@ function tr(key, args) {
 }
 
 function tr2(key, args) {
-    if (key == null) {
+    if (key === null) {
         console.log("ERROR: key was null?");
         return "";
     }
-    if (defaultTranslationMap == null) {
+    if (defaultTranslationMap === null) {
         console.log("ERROR: defaultTranslationMap was not initialized?");
         return key;
     }
     key = key.toLowerCase();
     var val = defaultTranslationMap[key];
-    if (val == null && enTranslationMap)
+    if (!val && enTranslationMap)
         val = enTranslationMap[key];
-    if (val == null)
+    if (!val)
         return key;
 
     return stringFormat(val, args);
@@ -1085,9 +1103,7 @@ function setAutoCompleteList(fromOrTo) {
             req.setCoord(point.lat, point.lng);
 
             req.input = suggestion.value;
-            if (ghRequest.from.isResolved() && ghRequest.to.isResolved())
-                routeLatLng(ghRequest);
-            else
+            if (!routeIfAllResolved())
                 focus(req, 15, isFrom);
 
             myAutoDiv.autocomplete().enable();
@@ -1095,12 +1111,15 @@ function setAutoCompleteList(fromOrTo) {
     };
 
     myAutoDiv.autocomplete(options);
-    $("#" + fromOrTo + "Input").focusout(function() {
-        myAutoDiv.autocomplete().disable();
-    });
-    $("#" + fromOrTo + "Input").focusin(function() {
-        myAutoDiv.autocomplete().enable();
-    });
+
+    // with the following more stable code we cannot click on suggestions anylonger
+//    $("#" + fromOrTo + "Input").focusout(function() {
+//        myAutoDiv.autocomplete().disable();
+//        myAutoDiv.autocomplete().hide();
+//    });
+//    $("#" + fromOrTo + "Input").focusin(function() {
+//        myAutoDiv.autocomplete().enable();
+//    });
 }
 
 function dataToHtml(data, query) {
@@ -1143,4 +1162,8 @@ function dataToText(data) {
     if (data.country && text.indexOf(data.country) < 0)
         text = insComma(text, data.country);
     return text;
+}
+
+function isProduction() {
+    return host.indexOf("graphhopper.com") > 0;
 }
