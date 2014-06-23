@@ -84,7 +84,7 @@ public class GraphHopper implements GraphHopperAPI
     private AlgorithmPreparation prepare;
     private boolean doPrepare = true;
     private boolean chEnabled = true;
-    private String chWeighting = "fastest";
+    private String chWeighting = "racerboi";
     private int periodicUpdates = -1;
     private int lazyUpdates = -1;
     private int neighborUpdates = -1;
@@ -724,6 +724,7 @@ public class GraphHopper implements GraphHopperAPI
      */
     public Weighting createWeighting( String weighting, FlagEncoder encoder )
     {
+        return new RacerboiWeighter();
         // ignore case
         weighting = weighting.toLowerCase();
         if ("fastest".equals(weighting))
@@ -732,7 +733,8 @@ public class GraphHopper implements GraphHopperAPI
                 return new PriorityWeighting((BikeCommonFlagEncoder) encoder);
             else
                 return new FastestWeighting(encoder);
-        }
+        } else if("racerboi".equals(weighting))
+            return new RacerboiWeighter();
         return new ShortestWeighting();
     }
 
