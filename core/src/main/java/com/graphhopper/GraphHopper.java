@@ -764,19 +764,19 @@ public class GraphHopper implements GraphHopperAPI
      */
     public Weighting createWeighting( String weighting, FlagEncoder encoder )
     {
-        return new RacerboiWeighter();
-        // ignore case
-        weighting = weighting.toLowerCase();
-        if ("fastest".equals(weighting))
-        {
-             logger.info("hello FEEEEEEEEEEEEEEEElix");
-            if (encoder instanceof BikeCommonFlagEncoder)
-                return new PriorityWeighting((BikeCommonFlagEncoder) encoder);
-            else
-                return new FastestWeighting(encoder);
-        } else if("racerboi".equals(weighting))
-            return new RacerboiWeighter();
-        return new ShortestWeighting();
+        return new RacerboiWeighter(encoder);
+//        // ignore case
+//        weighting = weighting.toLowerCase();
+//        if ("fastest".equals(weighting))
+//        {
+//             logger.info("hello FEEEEEEEEEEEEEEEElix");
+//            if (encoder instanceof BikeCommonFlagEncoder)
+//                return new PriorityWeighting((BikeCommonFlagEncoder) encoder);
+//            else
+//                return new FastestWeighting(encoder);
+//        } else if("racerboi".equals(weighting))
+//            return new RacerboiWeighter(encoder);
+//        return new ShortestWeighting();
     }
 
     @Override

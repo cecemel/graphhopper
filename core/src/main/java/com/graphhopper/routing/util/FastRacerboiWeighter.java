@@ -23,13 +23,11 @@ import com.graphhopper.util.EdgeIteratorState;
  *
  * @author madnificent
  */
-public class RacerboiWeighter extends ShortestWeighting
+public class FastRacerboiWeighter extends FastestWeighting
 {
-
-    public RacerboiWeighter( FlagEncoder encoder )
+     public FastRacerboiWeighter( FlagEncoder encoder )
     {
-        //super(encoder);
-        super();
+        super(encoder);
     }
 
     @Override
@@ -43,9 +41,8 @@ public class RacerboiWeighter extends ShortestWeighting
     {
         double fastestWeight = super.calcWeight(edge, reverse);
         double curvature = OSMReader.getNodeCurvatureMap().get(edge.getEdge());
-        double newValue = curvature;
+        double newValue = fastestWeight * curvature;
 //        System.out.println("Curvature: " + curvature + " Old weight: " + fastestWeight + " new weight: " + newValue);
-        return Math.min(50000, Math.max(newValue, 2));
-    }
-    
+        return newValue;
+    }   
 }

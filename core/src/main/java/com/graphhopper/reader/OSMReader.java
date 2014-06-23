@@ -17,7 +17,16 @@
  */
 package com.graphhopper.reader;
 
+import com.graphhopper.coll.GHLongIntBTree;
+import com.graphhopper.coll.LongIntMap;
+import com.graphhopper.reader.OSMTurnRelation.TurnCostTableEntry;
+import com.graphhopper.reader.dem.ElevationProvider;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.storage.*;
 import static com.graphhopper.util.Helper.nf;
+import com.graphhopper.util.*;
+import static com.graphhopper.util.Helper.nf;
+import com.graphhopper.util.shapes.GHPoint;
 import gnu.trove.list.TLongList;
 import gnu.trove.list.array.TLongArrayList;
 import gnu.trove.map.TIntLongMap;
@@ -26,33 +35,12 @@ import gnu.trove.map.hash.TIntLongHashMap;
 import gnu.trove.map.hash.TLongLongHashMap;
 import gnu.trove.set.TLongSet;
 import gnu.trove.set.hash.TLongHashSet;
-
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
+import java.util.*;
 import javax.xml.stream.XMLStreamException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.graphhopper.coll.GHLongIntBTree;
-import com.graphhopper.coll.LongIntMap;
-import com.graphhopper.reader.OSMTurnRelation.TurnCostTableEntry;
-import com.graphhopper.reader.dem.ElevationProvider;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.storage.*;
-import com.graphhopper.util.DistanceCalc;
-import com.graphhopper.util.DistanceCalc3D;
-import com.graphhopper.util.DistanceCalcEarth;
-import com.graphhopper.util.DouglasPeucker;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.PointList;
-import com.graphhopper.util.StopWatch;
-import com.graphhopper.util.shapes.GHPoint;
 
 /**
  * This class parses an OSM xml or pbf file and creates a graph from it. It does so in a two phase
@@ -101,8 +89,10 @@ public class OSMReader implements DataReader
     //        nodeOsmIdToIndexMap = new BigLongIntMap(expectedNodes, EMPTY);
     // smaller memory overhead for bigger data sets because of avoiding a "rehash"
     // remember how many times a node was used to identify tower nodes
-    private LongIntMap osmNodeIdToInternalNodeMap;
+    private static LongIntMap osmNodeIdToInternalNodeMap;
     private TLongLongHashMap osmNodeIdToNodeFlagsMap;
+    // store the curvature
+    private static TIntLongHashMap osmNodeIdToNodeCurvatureMap;
     private TLongLongHashMap osmWayIdToRouteWeightMap;
     // stores osm way ids used by relations to identify which edge ids needs to be mapped later
     private TLongHashSet osmIdStoreRequiredSet = new TLongHashSet();
@@ -128,6 +118,7 @@ public class OSMReader implements DataReader
 
         osmNodeIdToInternalNodeMap = new GHLongIntBTree(200);
         osmNodeIdToNodeFlagsMap = new TLongLongHashMap(200, .5f, 0, 0);
+        osmNodeIdToNodeCurvatureMap = new TIntLongHashMap(200, .5f, 0, 0);
         osmWayIdToRouteWeightMap = new TLongLongHashMap(200, .5f, 0, 0);
         pillarInfo = new PillarInfo(nodeAccess.is3D(), graphStorage.getDirectory());
     }
@@ -509,6 +500,7 @@ public class OSMReader implements DataReader
 
     private void processNode( OSMNode node )
     {
+        
         if (isInBounds(node))
         {
             addNode(node);
@@ -520,6 +512,12 @@ public class OSMReader implements DataReader
                 if (nodeFlags != 0)
                     getNodeFlagsMap().put(node.getId(), nodeFlags);
             }
+            
+            int nodeType = getNodeMap().get(node.getId());
+            String curvatureString = node.getTag("radius", "10000");
+            int curvature = (int) Float.parseFloat(curvatureString);
+            getNodeCurvatureMap().put(nodeType, curvature);
+//            System.out.println("Curvature for " + nodeType + " is " + curvature);
 
             locations++;
         } else
@@ -537,6 +535,7 @@ public class OSMReader implements DataReader
         double lat = node.getLat();
         double lon = node.getLon();
         double ele = getElevation(node);
+            
         if (nodeType == TOWER_NODE)
         {
             addTowerNode(node.getId(), lat, lon, ele);
@@ -546,6 +545,7 @@ public class OSMReader implements DataReader
             getNodeMap().put(node.getId(), nextPillarId + 3);
             nextPillarId++;
         }
+        
         return true;
     }
 
@@ -889,7 +889,7 @@ public class OSMReader implements DataReader
     /**
      * Maps OSM IDs (long) to internal node IDs (int)
      */
-    protected LongIntMap getNodeMap()
+    public static LongIntMap getNodeMap()
     {
         return osmNodeIdToInternalNodeMap;
     }
@@ -897,6 +897,11 @@ public class OSMReader implements DataReader
     protected TLongLongMap getNodeFlagsMap()
     {
         return osmNodeIdToNodeFlagsMap;
+    }
+    
+    public static TIntLongMap getNodeCurvatureMap()
+    {
+        return osmNodeIdToNodeCurvatureMap;
     }
 
     TLongLongHashMap getRelFlagsMap()

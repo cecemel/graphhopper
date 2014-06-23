@@ -63,10 +63,10 @@ public abstract class OSMElement
                 String key = parser.getAttributeValue(null, "k");
                 String value = parser.getAttributeValue(null, "v");
                 
-                System.out.println("-------Reading keys!---------");
-                System.out.println(key);
-                if (key == "radius")
-                    System.out.println("radius" + value);
+//                System.out.println("-------Reading keys!---------");
+//                System.out.println(key);
+//                if (key == "radius")
+//                    System.out.println("radius" + value);
                 // ignore tags with empty values
                 if (value != null && value.length() > 0)
                     setTag(key, value);
