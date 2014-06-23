@@ -16,28 +16,18 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util;
+package com.graphhopper.storage;
 
-import com.graphhopper.util.EdgeIteratorState;
+import java.io.File;
 
 /**
- * Special weighting for bike, uses the experimental API of encoder.getPriority(EdgeIteratorState)
- * <p>
  * @author Peter Karich
  */
-public class PriorityWeighting extends FastestWeighting
+public interface LockFactory
 {
-    public PriorityWeighting( FlagEncoder encoder )
-    {
-        super(encoder);
-    }
+    void setLockDir( File lockDir );
 
-    @Override
-    public double calcWeight( EdgeIteratorState edge, boolean reverse )
-    {
-        double weight = super.calcWeight(edge, reverse);
-        if (Double.isInfinite(weight))
-            return Double.POSITIVE_INFINITY;
-        return weight / (0.5 + encoder.getDouble(edge.getFlags(), BikeCommonFlagEncoder.K_PRIORITY));
-    }
+    Lock create( String fileName );
+
+    void forceRemove( String fileName );
 }
