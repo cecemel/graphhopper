@@ -41,11 +41,9 @@ public class RacerboiWeighter extends ShortestWeighting
     @Override
     public double calcWeight( EdgeIteratorState edge, boolean reverse )
     {
-        double fastestWeight = super.calcWeight(edge, reverse);
         double curvature = OSMReader.getNodeCurvatureMap().get(edge.getEdge());
-        double newValue = curvature;
 //        System.out.println("Curvature: " + curvature + " Old weight: " + fastestWeight + " new weight: " + newValue);
-        return Math.min(50000, Math.max(newValue, 2));
+        return Math.min(50000, Math.max(curvature, 2));
     }
     
 }
