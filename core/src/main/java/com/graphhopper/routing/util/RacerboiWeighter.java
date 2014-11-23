@@ -55,6 +55,7 @@ public class RacerboiWeighter extends FastestWeighting
     	//Use encoding information, else it is just going trough shortest path
     	double speed = 0;
     	try{
+    		//new GraphHopper().logger.info(edge.getFlags());
     		speed = reverse ? encoder.getReverseSpeed(edge.getFlags()) : encoder.getSpeed(edge.getFlags());
     	}
     	catch( IllegalStateException e){
@@ -68,6 +69,7 @@ public class RacerboiWeighter extends FastestWeighting
             return Double.POSITIVE_INFINITY;
         }
         
+        new GraphHopper().logger.info("Speed: " + speed);
         double curvature = OSMReader.getNodeCurvatureMap().get(edge.getEdge());
     	new GraphHopper().logger.info("Curvature: " + curvature);
         return Math.min(50000, Math.max(curvature, 2));
