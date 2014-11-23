@@ -37,33 +37,19 @@ public class RacerboiWeighter extends FastestWeighting
 
     @Override
     public double getMinWeight( double distance ) {
-        //return 0;
-        // NOTE: Usually this should be a field rather than a method
-        // variable so that it is not re-seeded every call.
-        Random rand = new Random();
-
-        // nextInt is normally exclusive of the top value,
-        // so add 1 to make it inclusive
-        int randomNum = rand.nextInt((10000 - 0) + 1) + 0;
-
-        return randomNum;
+    	
+    	new GraphHopper().logger.info("Min weight called");
+        return 0;
    }
 
     @Override
     public double calcWeight( EdgeIteratorState edge, boolean reverse )
     {   
+    	new GraphHopper().logger.info("Using encoder: " + encoder.getClass().getName());
     	//Use encoding information, else it is just going trough shortest path
     	double speed = 0;
-    	try{
-    		//new GraphHopper().logger.info(edge.getFlags());
-    		speed = reverse ? encoder.getReverseSpeed(edge.getFlags()) : encoder.getSpeed(edge.getFlags());
-    	}
-    	catch( IllegalStateException e){
-    		new GraphHopper().logger.info("ERROR.....................................");
-    		new GraphHopper().logger.info("ERROR.....................................");
-    		new GraphHopper().logger.info("ERROR......................................");
-    		throw e;	
-    	}
+    	speed = reverse ? encoder.getReverseSpeed(edge.getFlags()) : encoder.getSpeed(edge.getFlags());
+    	
         if (speed == 0){
         	new GraphHopper().logger.info("Curvature: Unrideable way found...");
             return Double.POSITIVE_INFINITY;
