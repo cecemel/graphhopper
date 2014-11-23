@@ -767,6 +767,7 @@ public class GraphHopper implements GraphHopperAPI
     public Weighting createWeighting( String weighting, FlagEncoder encoder )
     {
     	Class cls = encoder.getClass();
+    	System.out.print("fooooooo");
     	logger.info("----------ENCODER TYPE---------");
     	logger.info(cls.getName());
     	
