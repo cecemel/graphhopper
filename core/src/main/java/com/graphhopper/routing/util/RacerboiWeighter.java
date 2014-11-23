@@ -51,20 +51,16 @@ public class RacerboiWeighter extends FastestWeighting
 
     @Override
     public double calcWeight( EdgeIteratorState edge, boolean reverse )
-    {
-        // NOTE: Usually this should be a field rather than a method
-        // variable so that it is not re-seeded every call.
-        Random rand = new Random();
-
-        // nextInt is normally exclusive of the top value,
-        // so add 1 to make it inclusive
-        int randomNum = rand.nextInt((1000) + 1);
-
-        return randomNum;
-    	//return 10000000;
-//        double curvature = OSMReader.getNodeCurvatureMap().get(edge.getEdge());
-//        //("Curvature: " + curvature + " Old weight: " + fastestWeight + " new weight: " + newValue);
- //       return Math.min(50000, Math.max(curvature, 2));
+    {   
+    	//Use encoding information, else it is just going trough shortest path
+        double speed = reverse ? encoder.getReverseSpeed(edge.getFlags()) : encoder.getSpeed(edge.getFlags());
+        if (speed == 0)
+            return Double.POSITIVE_INFINITY;
+        
+        double curvature = OSMReader.getNodeCurvatureMap().get(edge.getEdge());
+    	new GraphHopper().logger.info("Curvature: " + curvature);
+        return Math.min(50000, Math.max(curvature, 2));
+        
     }
     
     @Override
