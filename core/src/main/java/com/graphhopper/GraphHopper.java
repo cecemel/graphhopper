@@ -67,7 +67,7 @@ public class GraphHopper implements GraphHopperAPI
         hopper.close();
     }
 
-    private final Logger logger = LoggerFactory.getLogger(getClass());
+    public Logger logger = LoggerFactory.getLogger(getClass());
     // for graph:
     private GraphStorage graph;
     private String ghLocation = "";
