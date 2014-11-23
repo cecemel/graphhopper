@@ -28,8 +28,9 @@ public class RacerboiWeighter extends FastestWeighting
 {
 
     public RacerboiWeighter( FlagEncoder encoder )
-    {
+    {  
         super(encoder);
+        new GraphHopper().logger.info(encoder.getClass().getName());
     }
 
     @Override
@@ -41,9 +42,8 @@ public class RacerboiWeighter extends FastestWeighting
     @Override
     public double calcWeight( EdgeIteratorState edge, boolean reverse )
     {
-    	new GraphHopper().logger("TEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAT");
         double curvature = OSMReader.getNodeCurvatureMap().get(edge.getEdge());
-//        System.out.println("Curvature: " + curvature + " Old weight: " + fastestWeight + " new weight: " + newValue);
+        //("Curvature: " + curvature + " Old weight: " + fastestWeight + " new weight: " + newValue);
         return Math.min(50000, Math.max(curvature, 2));
     }
     
