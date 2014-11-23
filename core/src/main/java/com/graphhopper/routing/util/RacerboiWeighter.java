@@ -53,7 +53,16 @@ public class RacerboiWeighter extends FastestWeighting
     public double calcWeight( EdgeIteratorState edge, boolean reverse )
     {   
     	//Use encoding information, else it is just going trough shortest path
-        double speed = reverse ? encoder.getReverseSpeed(edge.getFlags()) : encoder.getSpeed(edge.getFlags());
+    	double speed = 0;
+    	try{
+    		speed = reverse ? encoder.getReverseSpeed(edge.getFlags()) : encoder.getSpeed(edge.getFlags());
+    	}
+    	catch( IllegalStateException e){
+    		new GraphHopper().logger.info("ERROR.....................................");
+    		new GraphHopper().logger.info("ERROR.....................................");
+    		new GraphHopper().logger.info("ERROR......................................");
+    		throw e;	
+    	}
         if (speed == 0){
         	new GraphHopper().logger.info("Curvature: Unrideable way found...");
             return Double.POSITIVE_INFINITY;
