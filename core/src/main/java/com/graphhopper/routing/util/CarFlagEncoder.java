@@ -179,6 +179,8 @@ public class CarFlagEncoder extends AbstractFlagEncoder
             String tt = way.getTag("tracktype");
             if (tt != null && !tt.equals("grade1"))
                 return 0;
+            //testing 
+            return 0;
         }
 
         if (!defaultSpeedMap.containsKey(highwayValue))
