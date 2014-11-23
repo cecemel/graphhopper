@@ -42,9 +42,10 @@ public class RacerboiWeighter extends FastestWeighting
     @Override
     public double calcWeight( EdgeIteratorState edge, boolean reverse )
     {
-        double curvature = OSMReader.getNodeCurvatureMap().get(edge.getEdge());
-        //("Curvature: " + curvature + " Old weight: " + fastestWeight + " new weight: " + newValue);
-        return Math.min(50000, Math.max(curvature, 2));
+    	return 10000000;
+//        double curvature = OSMReader.getNodeCurvatureMap().get(edge.getEdge());
+//        //("Curvature: " + curvature + " Old weight: " + fastestWeight + " new weight: " + newValue);
+ //       return Math.min(50000, Math.max(curvature, 2));
     }
     
 }
