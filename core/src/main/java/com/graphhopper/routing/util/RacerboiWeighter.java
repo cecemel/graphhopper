@@ -21,15 +21,15 @@ import com.graphhopper.util.EdgeIteratorState;
 
 /**
  *
- * @author madnificent
+ * @author madnificent & felix 
  */
-public class RacerboiWeighter extends ShortestWeighting
+public class RacerboiWeighter extends FastestWeighting
 {
 
     public RacerboiWeighter( FlagEncoder encoder )
     {
-        //super(encoder);
-        super();
+        super(encoder);
+        //super();
     }
 
     @Override
