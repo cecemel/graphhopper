@@ -34,6 +34,7 @@ import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -52,8 +53,9 @@ public class GraphHopper implements GraphHopperAPI
 {
     public static void main( String[] strs ) throws Exception
     {
+        System.out.print("Hello world \n");
+        System.out.println(Arrays.toString(strs));
         CmdArgs args = CmdArgs.read(strs);
-        System.out.print("hello world");
         GraphHopper hopper = new GraphHopper().init(args);
         hopper.importOrLoad();
         if (args.getBool("graph.testIT", false))
@@ -764,6 +766,10 @@ public class GraphHopper implements GraphHopperAPI
      */
     public Weighting createWeighting( String weighting, FlagEncoder encoder )
     {
+    	Class cls = encoder.getClass();
+    	logger.info("----------ENCODER TYPE---------");
+    	logger.info(cls.getName());
+    	
         return new RacerboiWeighter(encoder);
 //        // ignore case
 //        weighting = weighting.toLowerCase();
