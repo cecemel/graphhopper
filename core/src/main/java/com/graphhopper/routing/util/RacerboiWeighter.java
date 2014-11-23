@@ -16,6 +16,8 @@
 
 package com.graphhopper.routing.util;
 
+import java.util.Random;
+
 import com.graphhopper.GraphHopper;
 import com.graphhopper.reader.OSMReader;
 import com.graphhopper.util.EdgeIteratorState;
@@ -33,19 +35,42 @@ public class RacerboiWeighter extends FastestWeighting
         new GraphHopper().logger.info(encoder.getClass().getName());
     }
 
-//    @Override
-//    public double getMinWeight( double distance )
-//    {
-//        return 0;
-//    }
+    @Override
+    public double getMinWeight( double distance ) {
+        //return 0;
+        // NOTE: Usually this should be a field rather than a method
+        // variable so that it is not re-seeded every call.
+        Random rand = new Random();
+
+        // nextInt is normally exclusive of the top value,
+        // so add 1 to make it inclusive
+        int randomNum = rand.nextInt((10000 - 0) + 1) + 0;
+
+        return randomNum;
+   }
 
     @Override
     public double calcWeight( EdgeIteratorState edge, boolean reverse )
     {
-    	return 10000000;
+        // NOTE: Usually this should be a field rather than a method
+        // variable so that it is not re-seeded every call.
+        Random rand = new Random();
+
+        // nextInt is normally exclusive of the top value,
+        // so add 1 to make it inclusive
+        int randomNum = rand.nextInt((1000) + 1);
+
+        return randomNum;
+    	//return 10000000;
 //        double curvature = OSMReader.getNodeCurvatureMap().get(edge.getEdge());
 //        //("Curvature: " + curvature + " Old weight: " + fastestWeight + " new weight: " + newValue);
  //       return Math.min(50000, Math.max(curvature, 2));
+    }
+    
+    @Override
+    public String toString()
+    {
+        return "RacerBoi|" + this.encoder;
     }
     
 }
