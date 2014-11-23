@@ -180,7 +180,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
             if (tt != null && !tt.equals("grade1"))
                 return 0;
             //testing 
-            return 0;
+            //return 0;
         }
 
         if (!defaultSpeedMap.containsKey(highwayValue))

@@ -33,11 +33,11 @@ public class RacerboiWeighter extends FastestWeighting
         new GraphHopper().logger.info(encoder.getClass().getName());
     }
 
-    @Override
-    public double getMinWeight( double distance )
-    {
-        return 0;
-    }
+//    @Override
+//    public double getMinWeight( double distance )
+//    {
+//        return 0;
+//    }
 
     @Override
     public double calcWeight( EdgeIteratorState edge, boolean reverse )
