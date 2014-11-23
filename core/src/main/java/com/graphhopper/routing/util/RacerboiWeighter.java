@@ -16,6 +16,7 @@
 
 package com.graphhopper.routing.util;
 
+import com.graphhopper.GraphHopper;
 import com.graphhopper.reader.OSMReader;
 import com.graphhopper.util.EdgeIteratorState;
 
@@ -29,7 +30,6 @@ public class RacerboiWeighter extends FastestWeighting
     public RacerboiWeighter( FlagEncoder encoder )
     {
         super(encoder);
-        //super();
     }
 
     @Override
@@ -41,6 +41,7 @@ public class RacerboiWeighter extends FastestWeighting
     @Override
     public double calcWeight( EdgeIteratorState edge, boolean reverse )
     {
+    	System.out.print("TEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAT");
         double curvature = OSMReader.getNodeCurvatureMap().get(edge.getEdge());
 //        System.out.println("Curvature: " + curvature + " Old weight: " + fastestWeight + " new weight: " + newValue);
         return Math.min(50000, Math.max(curvature, 2));
