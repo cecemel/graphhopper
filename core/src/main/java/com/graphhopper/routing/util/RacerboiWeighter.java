@@ -31,7 +31,7 @@ public class RacerboiWeighter implements Weighting
     public RacerboiWeighter( FlagEncoder encoder )
     {  
     	this.encoder = encoder;
-        new GraphHopper().logger.info(encoder.getClass().getName());
+        //new GraphHopper().logger.info(encoder.getClass().getName());
     }
 
     @Override
@@ -44,7 +44,7 @@ public class RacerboiWeighter implements Weighting
     @Override
     public double calcWeight( EdgeIteratorState edge, boolean reverse )
     {   
-    	new GraphHopper().logger.info("Using encoder: " + encoder.getClass().getName());
+    	//new GraphHopper().logger.info("Using encoder: " + encoder.getClass().getName());
     	//Use encoding information, else it is just going trough shortest path
     	double speed = 0;
     	speed = reverse ? encoder.getReverseSpeed(edge.getFlags()) : encoder.getSpeed(edge.getFlags());
@@ -54,9 +54,9 @@ public class RacerboiWeighter implements Weighting
             return Double.POSITIVE_INFINITY;
         }
         
-        new GraphHopper().logger.info("Speed: " + speed);
+        //new GraphHopper().logger.info("Speed: " + speed);
         double curvature = OSMReader.getNodeCurvatureMap().get(edge.getEdge());
-    	new GraphHopper().logger.info("Curvature: " + curvature);
+    	//new GraphHopper().logger.info("Curvature: " + curvature);
         return speed/curvature;
         
     }
