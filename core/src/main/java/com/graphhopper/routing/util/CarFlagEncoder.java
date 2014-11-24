@@ -178,7 +178,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
 
         if ("track".equals(highwayValue))
         {  
-        	new GraphHopper().logger.info("No fuckin way track!");
+        	//new GraphHopper().logger.info("No fuckin way track!!");
             String tt = way.getTag("tracktype");
             if (tt != null && !tt.equals("grade1"))
                 return 0;
