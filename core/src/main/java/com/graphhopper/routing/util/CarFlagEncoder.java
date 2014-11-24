@@ -23,6 +23,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import com.graphhopper.GraphHopper;
 import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMReader;
 import com.graphhopper.reader.OSMRelation;
@@ -30,6 +31,7 @@ import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.reader.OSMTurnRelation.TurnCostTableEntry;
 import com.graphhopper.reader.OSMWay;
 import com.graphhopper.util.Helper;
+
 import java.util.*;
 
 /**
@@ -175,12 +177,13 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         }
 
         if ("track".equals(highwayValue))
-        {
+        {  
+        	new GraphHopper().logger.info("No fuckin way track!");
             String tt = way.getTag("tracktype");
             if (tt != null && !tt.equals("grade1"))
                 return 0;
             //testing 
-            //return 0;
+            return 0;
         }
 
         if (!defaultSpeedMap.containsKey(highwayValue))
