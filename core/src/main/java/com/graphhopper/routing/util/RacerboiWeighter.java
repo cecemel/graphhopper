@@ -58,7 +58,7 @@ public class RacerboiWeighter implements Weighting
         double curvature = OSMReader.getNodeCurvatureMap().get(edge.getEdge());
     	//new GraphHopper().logger.info("Curvature: " + curvature);
         //return speed/curvature;
-        return Math.exp(curvature);
+        return Math.exp(curvature/10000);
         //return curvature; //this is cooler, but takes autobahn, we don't want this
         
     }
