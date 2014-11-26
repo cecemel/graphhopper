@@ -57,7 +57,8 @@ public class RacerboiWeighter implements Weighting
         //new GraphHopper().logger.info("Speed: " + speed);
         double curvature = OSMReader.getNodeCurvatureMap().get(edge.getEdge());
     	//new GraphHopper().logger.info("Curvature: " + curvature);
-        return speed/curvature; 
+        //return speed/curvature;
+        return Math.log(1/50*curvature); //50 curvature is WAY ok, so I agree with negative values
         //return curvature; //this is cooler, but takes autobahn, we don't want this
         
     }
