@@ -21,7 +21,7 @@ public class RacerboiSegmentWeighter implements Weighting {
 		double segmentCurvature = OSMReader.getSegmentCurvatureMap().get(edge.getEdge());
 		double segmentLength = OSMReader.getSegmentLengthMap().get(edge.getEdge());
 		
-		if(segmentCurvature > 300 && segmentLength > 1000){
+		if(segmentCurvature > 100 && segmentLength > 500){
 			return 0; //give these babies for free
 		}
 		return edge.getDistance(); //return shortestpath
