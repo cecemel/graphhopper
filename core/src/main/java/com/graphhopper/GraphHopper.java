@@ -770,7 +770,7 @@ public class GraphHopper implements GraphHopperAPI
     	logger.info("----------ENCODER TYPE---------");
     	logger.info(cls.getName());
     	
-        return new RacerboiWeighter(encoder);
+        return new RacerboiSegmentWeighter();
 //        // ignore case
 //        weighting = weighting.toLowerCase();
 //        if ("fastest".equals(weighting))

@@ -93,6 +93,10 @@ public class OSMReader implements DataReader
     private TLongLongHashMap osmNodeIdToNodeFlagsMap;
     // store the curvature
     private static TIntLongHashMap osmNodeIdToNodeCurvatureMap;
+    
+    //store the segments curvature
+    private static TIntLongHashMap osmNodeIdToSegmentCurvatureMap;
+    
     private TLongLongHashMap osmWayIdToRouteWeightMap;
     // stores osm way ids used by relations to identify which edge ids needs to be mapped later
     private TLongHashSet osmIdStoreRequiredSet = new TLongHashSet();
@@ -119,6 +123,7 @@ public class OSMReader implements DataReader
         osmNodeIdToInternalNodeMap = new GHLongIntBTree(200);
         osmNodeIdToNodeFlagsMap = new TLongLongHashMap(200, .5f, 0, 0);
         osmNodeIdToNodeCurvatureMap = new TIntLongHashMap(200, .5f, 0, 0);
+        osmNodeIdToSegmentCurvatureMap = new TIntLongHashMap(200, .5f, 0, 0);
         osmWayIdToRouteWeightMap = new TLongLongHashMap(200, .5f, 0, 0);
         pillarInfo = new PillarInfo(nodeAccess.is3D(), graphStorage.getDirectory());
     }
@@ -514,9 +519,18 @@ public class OSMReader implements DataReader
             }
             
             int nodeType = getNodeMap().get(node.getId());
+            
+            // node radius
             String curvatureString = node.getTag("radius", "10000");
             int curvature = (int) Float.parseFloat(curvatureString);
             getNodeCurvatureMap().put(nodeType, curvature);
+            
+            //segment radius
+            String segmentRadius = node.getTag("segment_radius", "10000");
+            int radius = (int) Float.parseFloat(segmentRadius);
+            getSegmentCurvatureMap().put(nodeType, radius);
+            
+            
 //            System.out.println("Curvature for " + nodeType + " is " + curvature);
 
             locations++;
@@ -902,6 +916,11 @@ public class OSMReader implements DataReader
     public static TIntLongMap getNodeCurvatureMap()
     {
         return osmNodeIdToNodeCurvatureMap;
+    }
+    
+    public static TIntLongMap getSegmentCurvatureMap()
+    {
+        return osmNodeIdToSegmentCurvatureMap;
     }
 
     TLongLongHashMap getRelFlagsMap()
