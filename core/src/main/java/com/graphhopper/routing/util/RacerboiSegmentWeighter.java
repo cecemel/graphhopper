@@ -19,8 +19,10 @@ public class RacerboiSegmentWeighter implements Weighting {
 	public double calcWeight(EdgeIteratorState edge, boolean reverse) {
 		
 		//get the curvature of segment
-		new GraphHopper().logger.info("STARTING ###################");
+		//new GraphHopper().logger.info("STARTING ###################");
 		double segmentCurvature = OSMReader.getSegmentCurvatureMap().get(edge.getEdge());
+		
+		new GraphHopper().logger.info("GOT CURVATURE:" + String.valueOf(segmentCurvature));
 		double segmentLength = OSMReader.getSegmentLengthMap().get(edge.getEdge());
 		
 		if(segmentCurvature > 100 && segmentLength > 100){
