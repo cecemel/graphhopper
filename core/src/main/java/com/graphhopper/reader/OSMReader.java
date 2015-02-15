@@ -94,8 +94,12 @@ public class OSMReader implements DataReader
     // store the curvature
     private static TIntLongHashMap osmNodeIdToNodeCurvatureMap;
     
+    //store the segments length
+    private static TIntLongHashMap osmNodeIdToSegmentLengthMap;
+    
     //store the segments curvature
     private static TIntLongHashMap osmNodeIdToSegmentCurvatureMap;
+    
     
     private TLongLongHashMap osmWayIdToRouteWeightMap;
     // stores osm way ids used by relations to identify which edge ids needs to be mapped later
@@ -123,6 +127,7 @@ public class OSMReader implements DataReader
         osmNodeIdToInternalNodeMap = new GHLongIntBTree(200);
         osmNodeIdToNodeFlagsMap = new TLongLongHashMap(200, .5f, 0, 0);
         osmNodeIdToNodeCurvatureMap = new TIntLongHashMap(200, .5f, 0, 0);
+        osmNodeIdToSegmentLengthMap = new TIntLongHashMap(200, .5f, 0, 0);
         osmNodeIdToSegmentCurvatureMap = new TIntLongHashMap(200, .5f, 0, 0);
         osmWayIdToRouteWeightMap = new TLongLongHashMap(200, .5f, 0, 0);
         pillarInfo = new PillarInfo(nodeAccess.is3D(), graphStorage.getDirectory());
@@ -525,14 +530,16 @@ public class OSMReader implements DataReader
             int curvature = (int) Float.parseFloat(curvatureString);
             getNodeCurvatureMap().put(nodeType, curvature);
             
-            //segment radius
-            String segmentRadius = node.getTag("segment_radius", "10000");
-            int radius = (int) Float.parseFloat(segmentRadius);
-            getSegmentCurvatureMap().put(nodeType, radius);
+            //segment curvature
+            String segmentCurvatureString = node.getTag("segment_curvature", "0");
+            int segmentCurvature = (int) Float.parseFloat(segmentCurvatureString);
+            getSegmentCurvatureMap().put(nodeType, segmentCurvature);
             
+            //segment length
+            String segmentLengthString = node.getTag("segment_length", "0");
+            int segmentLength = (int) Float.parseFloat(segmentLengthString);
+            getSegmentLengthMap().put(nodeType, segmentLength);
             
-//            System.out.println("Curvature for " + nodeType + " is " + curvature);
-
             locations++;
         } else
         {
@@ -922,6 +929,12 @@ public class OSMReader implements DataReader
     {
         return osmNodeIdToSegmentCurvatureMap;
     }
+    
+    public static TIntLongMap getSegmentLengthMap()
+    {
+        return osmNodeIdToSegmentLengthMap;
+    }
+
 
     TLongLongHashMap getRelFlagsMap()
     {
