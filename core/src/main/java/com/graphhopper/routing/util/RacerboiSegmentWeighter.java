@@ -30,7 +30,7 @@ public class RacerboiSegmentWeighter implements Weighting {
 		//double test = curvature * edge.getDistance();
 		//new GraphHopper().logger.info("###################### WEIGHT: " + String.valueOf(test));
 		//new GraphHopper().logger.info("###################### DISTANCE: " + String.valueOf(edge.getDistance()));
-		return (curvature * edge.getDistance())/100;
+		return (curvature * edge.getDistance())/1000;
 	}
 	
     @Override
