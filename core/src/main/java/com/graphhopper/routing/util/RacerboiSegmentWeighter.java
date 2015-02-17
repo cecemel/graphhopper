@@ -29,7 +29,7 @@ public class RacerboiSegmentWeighter implements Weighting {
 			//new GraphHopper().logger.info("Got fun segment ###################");
 			return 0; //give these babies for free
 		}
-		return 10000 * edge.getDistance(); //return shortestpath
+		return  edge.getDistance(); //return shortestpath
 	}
 	
     @Override
