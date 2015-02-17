@@ -26,7 +26,9 @@ public class RacerboiSegmentWeighter implements Weighting {
 			//new GraphHopper().logger.info("Got fun segment ###################");
 			return 0; //give these babies for free
 		}
-		return  curvature * edge.getDistance(); //return shortestpath
+		
+		double test = curvature * edge.getDistance();
+		return test;
 	}
 	
     @Override
